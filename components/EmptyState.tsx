@@ -17,11 +17,17 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
           {icon}
         </div>
       )}
-      <h3 className="text-[length:var(--text-h2)] font-[500] text-[var(--color-ink)] mb-[8px]">
+      <h3
+        className="font-[family-name:var(--font-display)] text-[var(--color-ink)] mb-[8px]"
+        style={{ fontSize: "18px", lineHeight: "1.3", fontWeight: 500, letterSpacing: "-0.01em" }}
+      >
         {title}
       </h3>
       {description && (
-        <p className="text-[length:var(--text-caption)] text-[var(--color-ink-muted)] mb-[24px] max-w-[320px]">
+        <p
+          className="text-[var(--color-ink-muted)] mb-[24px] max-w-[320px]"
+          style={{ fontSize: "14px", lineHeight: "1.4" }}
+        >
           {description}
         </p>
       )}

@@ -51,16 +51,25 @@ export const BookRow: React.FC<BookRowProps> = ({
         <BookCover title={title} src={coverSrc} size="sm" />
         
         <div className="flex-grow min-w-0">
-          <h3 className="text-[length:var(--text-h2)] font-[500] font-[family-name:var(--font-display)] text-[var(--color-ink)] truncate">
+          <h3
+            className="font-[family-name:var(--font-display)] text-[var(--color-ink)] truncate"
+            style={{ fontSize: "18px", lineHeight: "1.3", fontWeight: 500, letterSpacing: "-0.01em" }}
+          >
             {title}
           </h3>
-          <p className="text-[length:var(--text-body)] font-[family-name:var(--font-ui)] text-[var(--color-ink-muted)] truncate">
+          <p
+            className="font-[family-name:var(--font-ui)] text-[var(--color-ink-muted)] truncate"
+            style={{ fontSize: "15px", lineHeight: "1.5" }}
+          >
             {author}
           </p>
         </div>
 
         <div className="flex items-center gap-[24px]">
-          <div className={`text-[length:var(--text-caption)] font-[family-name:var(--font-ui)] ${statusColor} whitespace-nowrap`}>
+          <div
+            className={`font-[family-name:var(--font-ui)] ${statusColor} whitespace-nowrap`}
+            style={{ fontSize: "14px", lineHeight: "1.4" }}
+          >
             {statusLabel}
           </div>
 
@@ -68,14 +77,16 @@ export const BookRow: React.FC<BookRowProps> = ({
             {status === "available" ? (
               <button
                 onClick={onCheckOut}
-                className="px-[12px] py-[6px] bg-[var(--color-shelf-brown)] text-[var(--color-surface)] rounded-[2px] text-[length:var(--text-caption)] font-[500] font-[family-name:var(--font-ui)] hover:opacity-90 transition-opacity focus-visible:ring-[2px] focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-[2px] outline-none"
+                className="px-[12px] py-[6px] bg-[var(--color-shelf-brown)] text-[var(--color-surface)] rounded-[2px] font-[500] font-[family-name:var(--font-ui)] hover:opacity-90 transition-opacity focus-visible:ring-[2px] focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-[2px] outline-none"
+                style={{ fontSize: "14px", lineHeight: "1.4" }}
               >
                 Check Out
               </button>
             ) : isSelf ? (
               <button
                 onClick={onReturn}
-                className="px-[12px] py-[6px] border-[1px] border-[var(--color-shelf-brown)] text-[var(--color-shelf-brown)] rounded-[2px] text-[length:var(--text-caption)] font-[500] font-[family-name:var(--font-ui)] hover:bg-[var(--color-canvas)] transition-colors focus-visible:ring-[2px] focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-[2px] outline-none"
+                className="px-[12px] py-[6px] border-[1px] border-[var(--color-shelf-brown)] text-[var(--color-shelf-brown)] rounded-[2px] font-[500] font-[family-name:var(--font-ui)] hover:bg-[var(--color-canvas)] transition-colors focus-visible:ring-[2px] focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-[2px] outline-none"
+                style={{ fontSize: "14px", lineHeight: "1.4" }}
               >
                 Return
               </button>
@@ -83,8 +94,8 @@ export const BookRow: React.FC<BookRowProps> = ({
 
             <button
               onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-              className="flex items-center gap-[4px] px-[8px] py-[4px] text-[length:var(--text-caption)] font-[family-name:var(--font-ui)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors focus-visible:ring-[2px] focus-visible:ring-[var(--color-focus)] rounded-[2px] outline-none"
-              aria-label="Toggle borrow history"
+              className="flex items-center gap-[4px] font-[family-name:var(--font-ui)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors focus-visible:ring-[2px] focus-visible:ring-[var(--color-focus)] rounded-[2px] outline-none"
+              style={{ fontSize: "14px", lineHeight: "1.4" }}
             >
               Borrow History
               <motion.svg
@@ -110,18 +121,28 @@ export const BookRow: React.FC<BookRowProps> = ({
             transition={{ duration: 0.2, ease: "easeOut" }}
           >
             <div className="pb-[16px] pl-[68px] pr-[4px]">
-              <h4 className="text-[length:var(--text-mono-label)] font-[family-name:var(--font-mono)] text-[var(--color-ink-muted)] uppercase tracking-wider mb-[8px]">
+              <h4
+                className="font-[family-name:var(--font-mono)] text-[var(--color-ink-muted)] uppercase mb-[8px]"
+                style={{ fontSize: "14px", lineHeight: "1.4", letterSpacing: "0.02em" }}
+              >
                 History
               </h4>
               <div className="space-y-[4px]">
                 {history.length > 0 ? (
                   history.map((entry, idx) => (
-                    <div key={idx} className="text-[length:var(--text-caption)] font-[family-name:var(--font-ui)] text-[var(--color-ink)]">
+                    <div
+                      key={idx}
+                      className="font-[family-name:var(--font-ui)] text-[var(--color-ink)]"
+                      style={{ fontSize: "14px", lineHeight: "1.4" }}
+                    >
                       {entry.name} — {entry.date}{entry.isCurrent ? " to Present" : ""}
                     </div>
                   ))
                 ) : (
-                  <div className="text-[length:var(--text-caption)] font-[family-name:var(--font-ui)] text-[var(--color-ink-muted)]">
+                  <div
+                    className="font-[family-name:var(--font-ui)] text-[var(--color-ink-muted)]"
+                    style={{ fontSize: "14px", lineHeight: "1.4" }}
+                  >
                     No one has borrowed this book yet.
                   </div>
                 )}

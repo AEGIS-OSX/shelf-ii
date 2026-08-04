@@ -24,7 +24,10 @@ export const BookCover: React.FC<BookCoverProps> = ({ title, src, size = "md" })
         />
       ) : (
         <div className="flex flex-col items-center justify-center p-[4px] text-center">
-          <span className="text-[length:var(--text-caption)] font-[family-name:var(--font-mono)] uppercase tracking-wider text-[var(--color-shelf-brown)] leading-tight">
+          <span
+            className="font-[family-name:var(--font-mono)] uppercase text-[var(--color-shelf-brown)]"
+            style={{ fontSize: "14px", lineHeight: "1.4", letterSpacing: "0.02em" }}
+          >
             {title.split(" ").map((word) => word[0]).join("").slice(0, 3)}
           </span>
         </div>

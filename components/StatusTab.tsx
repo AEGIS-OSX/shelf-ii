@@ -20,11 +20,12 @@ export const StatusTab: React.FC<StatusTabProps> = ({ activeTab, onTabChange }) 
         <button
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
-          className={`relative pb-[8px] text-[length:var(--text-caption)] font-[family-name:var(--font-ui)] transition-colors focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-[2px] ${
+          className={`relative pb-[8px] font-[family-name:var(--font-ui)] transition-colors focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-[2px] ${
             activeTab === tab.id
               ? "text-[var(--color-ink)]"
               : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
           }`}
+          style={{ fontSize: "14px", lineHeight: "1.4" }}
         >
           {tab.label}
           {activeTab === tab.id && (

@@ -4,12 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/components/ThemeProvider";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { createClient } from "@/lib/supabase/client";
 
 export default function TopBar() {
   const pathname = usePathname();
   const isSignInPage = pathname === "/sign-in";
   const { theme, toggleTheme } = useTheme();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
 
   if (isSignInPage) return null;
 
@@ -42,7 +43,7 @@ export default function TopBar() {
                 {user.email}
               </span>
               <button
-                onClick={signOut}
+                onClick={() => createClient().auth.signOut()}
                 className="font-[family-name:var(--font-ui)] text-[14px] font-medium text-[var(--color-ink)] transition-colors hover:text-[var(--color-shelf-brown)]"
               >
                 Sign Out

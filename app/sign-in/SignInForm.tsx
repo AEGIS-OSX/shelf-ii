@@ -1,228 +1,240 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect, useCallback, type FormEvent } from "react";
-import { motion } from "framer-motion";
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
-interface SignInFormProps {
-  redirectTo: string;
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduced(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return reduced;
 }
 
-export default function SignInForm({ redirectTo }: SignInFormProps) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export default function SignInForm() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
-
   const formRef = useRef<HTMLFormElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
-  const submitRef = useRef<HTMLButtonElement>(null);
+  const reducedMotion = useReducedMotion();
+  const router = useRouter();
+  const errorId = useId();
 
-  // Focus the email field on mount
+  const transitionDuration = reducedMotion ? '0ms' : '200ms';
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter both email and password.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (authError) {
+        setError(authError.message || 'Invalid email or password.');
+        return;
+      }
+      router.push('/');
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Something went wrong. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // focus first field on mount
   useEffect(() => {
     emailRef.current?.focus();
   }, []);
 
-  // Focus trap: keep focus within the form while it is mounted
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      // On Escape, move focus to the email field (no close action since this is not a drawer)
-      emailRef.current?.focus();
-      return;
-    }
-
-    if (e.key !== "Tab") return;
-
-    const form = formRef.current;
-    if (!form) return;
-
-    const focusable = form.querySelectorAll<HTMLElement>(
-      "input, button, [tabindex]:not([tabindex='-1'])"
-    );
-    if (focusable.length === 0) return;
-
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-
-    if (e.shiftKey) {
-      if (document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      }
-    } else {
-      if (document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
-
-  function validate(): boolean {
-    const errors: { email?: string; password?: string } = {};
-    let valid = true;
-
-    if (!email.trim()) {
-      errors.email = "This field is required.";
-      valid = false;
-    }
-    if (!password.trim()) {
-      errors.password = "This field is required.";
-      valid = false;
-    }
-
-    setFieldErrors(errors);
-    return valid;
-  }
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-
-    if (!validate()) return;
-
-    setLoading(true);
-
-    // Simulate authentication delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    // For now, accept any non-empty credentials as a demo flow
-    // Real auth will be wired to Supabase in a later task
-    if (email.trim() && password.trim()) {
-      window.location.href = redirectTo;
-    } else {
-      setError("Incorrect email or password.");
-      setLoading(false);
-    }
-  }
-
   return (
-    <form
-      ref={formRef}
-      onSubmit={handleSubmit}
-      noValidate
-      className="rounded-[8px] border border-[var(--color-border)] bg-[var(--color-surface)] p-[var(--space-6)] shadow-sm"
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 'var(--space-4)',
+        backgroundColor: 'var(--color-canvas)',
+        color: 'var(--color-ink)',
+        fontFamily: 'var(--font-ui)',
+      }}
     >
-      <div className="space-y-[var(--space-4)]">
-        {/* Email field */}
-        <div>
-          <label
-            htmlFor="email"
-            className="mb-[var(--space-1)] block text-[14px] leading-[1.4] font-[500] text-[var(--color-ink)]"
-          >
-            Email Address
-          </label>
-          <input
-            ref={emailRef}
-            id="email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (fieldErrors.email) {
-                setFieldErrors((prev) => ({ ...prev, email: undefined }));
-              }
-            }}
-            placeholder="you@example.com"
-            aria-invalid={!!fieldErrors.email}
-            aria-describedby={fieldErrors.email ? "email-error" : undefined}
-            disabled={loading}
-            className="w-full rounded-[4px] border border-[var(--color-border)] bg-[var(--color-canvas)] px-[var(--space-3)] py-[var(--space-2)] text-[15px] leading-[1.5] text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] transition-colors duration-150 focus:border-[var(--color-focus)] focus:outline-none focus:ring-[2px] focus:ring-[var(--color-focus)] focus:ring-offset-[2px] focus:ring-offset-[var(--color-surface)] disabled:cursor-not-allowed disabled:opacity-50"
-          />
-          {fieldErrors.email && (
-            <p id="email-error" className="mt-[var(--space-1)] text-[14px] leading-[1.4] text-[var(--color-checked-out)]" role="alert">
-              {fieldErrors.email}
-            </p>
-          )}
-        </div>
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '24rem',
+          backgroundColor: 'var(--color-surface)',
+          borderRadius: 'var(--space-2)',
+          border: '1px solid var(--color-border)',
+          padding: 'var(--space-6)',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+        }}
+      >
+        <h1
+          style={{
+            margin: `0 0 var(--space-6)`,
+            fontFamily: 'var(--font-display)',
+            fontSize: '1.5rem',
+            fontWeight: 600,
+            textAlign: 'center',
+          }}
+        >
+          Sign In
+        </h1>
 
-        {/* Password field */}
-        <div>
-          <label
-            htmlFor="password"
-            className="mb-[var(--space-1)] block text-[14px] leading-[1.4] font-[500] text-[var(--color-ink)]"
-          >
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (fieldErrors.password) {
-                setFieldErrors((prev) => ({ ...prev, password: undefined }));
-              }
-            }}
-            placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
-            aria-invalid={!!fieldErrors.password}
-            aria-describedby={fieldErrors.password ? "password-error" : undefined}
-            disabled={loading}
-            className="w-full rounded-[4px] border border-[var(--color-border)] bg-[var(--color-canvas)] px-[var(--space-3)] py-[var(--space-2)] text-[15px] leading-[1.5] text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] transition-colors duration-150 focus:border-[var(--color-focus)] focus:outline-none focus:ring-[2px] focus:ring-[var(--color-focus)] focus:ring-offset-[2px] focus:ring-offset-[var(--color-surface)] disabled:cursor-not-allowed disabled:opacity-50"
-          />
-          {fieldErrors.password && (
-            <p id="password-error" className="mt-[var(--space-1)] text-[14px] leading-[1.4] text-[var(--color-checked-out)]" role="alert">
-              {fieldErrors.password}
-            </p>
-          )}
-        </div>
-
-        {/* General error */}
         {error && (
-          <motion.p
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="text-[14px] leading-[1.4] text-[var(--color-checked-out)]"
+          <div
+            id={errorId}
             role="alert"
+            style={{
+              backgroundColor: 'rgba(200,0,0,0.08)',
+              color: '#a00',
+              padding: 'var(--space-3)',
+              borderRadius: 'var(--space-1)',
+              fontSize: '0.875rem',
+              marginBottom: 'var(--space-4)',
+            }}
           >
             {error}
-          </motion.p>
+          </div>
         )}
 
-        {/* Submit button */}
-        <button
-          ref={submitRef}
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-[4px] bg-[var(--color-shelf-brown)] px-[var(--space-4)] py-[var(--space-2)] text-[15px] leading-[1.5] font-[500] text-[var(--color-surface)] transition-colors duration-150 hover:opacity-90 focus:outline-none focus:ring-[2px] focus:ring-[var(--color-focus)] focus:ring-offset-[2px] focus:ring-offset-[var(--color-surface)] disabled:cursor-not-allowed disabled:opacity-50"
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          noValidate
+          style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}
         >
-          {loading ? (
-            <span className="flex items-center justify-center gap-[var(--space-2)]">
-              <svg
-                className="h-[16px] w-[16px] animate-spin text-[var(--color-surface)]"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                />
-              </svg>
-              Signing in&hellip;
-            </span>
-          ) : (
-            "Sign In"
-          )}
-        </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+            <label
+              htmlFor="signin-email"
+              style={{
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                color: 'var(--color-ink)',
+              }}
+            >
+              Email
+            </label>
+            <input
+              ref={emailRef}
+              id="signin-email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError(null);
+              }}
+              disabled={loading}
+              aria-invalid={!!error}
+              aria-describedby={error ? errorId : undefined}
+              style={{
+                fontFamily: 'var(--font-ui)',
+                fontSize: '1rem',
+                padding: 'var(--space-2) var(--space-3)',
+                borderRadius: 'var(--space-1)',
+                border: `1px solid ${error ? '#a00' : 'var(--color-border)'}`,
+                backgroundColor: 'var(--color-canvas)',
+                color: 'var(--color-ink)',
+                outline: 'none',
+                transition: `border-color ${transitionDuration} ease-out, box-shadow ${transitionDuration} ease-out`,
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-focus)';
+              }}
+              onBlurCapture={(e) => {
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+            <label
+              htmlFor="signin-password"
+              style={{
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                color: 'var(--color-ink)',
+              }}
+            >
+              Password
+            </label>
+            <input
+              id="signin-password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (error) setError(null);
+              }}
+              disabled={loading}
+              aria-invalid={!!error}
+              aria-describedby={error ? errorId : undefined}
+              style={{
+                fontFamily: 'var(--font-ui)',
+                fontSize: '1rem',
+                padding: 'var(--space-2) var(--space-3)',
+                borderRadius: 'var(--space-1)',
+                border: `1px solid ${error ? '#a00' : 'var(--color-border)'}`,
+                backgroundColor: 'var(--color-canvas)',
+                color: 'var(--color-ink)',
+                outline: 'none',
+                transition: `border-color ${transitionDuration} ease-out, box-shadow ${transitionDuration} ease-out`,
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-focus)';
+              }}
+              onBlurCapture={(e) => {
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              marginTop: 'var(--space-2)',
+              fontFamily: 'var(--font-ui)',
+              backgroundColor: loading
+                ? 'var(--color-border)'
+                : 'var(--color-shelf-brown)',
+              color: 'var(--color-canvas)',
+              padding: 'var(--space-3) var(--space-4)',
+              borderRadius: 'var(--space-1)',
+              border: 'none',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontSize: '1rem',
+              fontWeight: 500,
+              transition: `background-color ${transitionDuration} ease-out, transform ${transitionDuration} ease-out`,
+            }}
+          >
+            {loading ? 'Signing in…' : 'Sign In'}
+          </button>
+        </form>
       </div>
-    </form>
+    </div>
   );
 }

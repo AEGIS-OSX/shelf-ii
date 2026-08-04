@@ -11,18 +11,17 @@ import { useRouter } from "next/navigation";
  * Desktop: Modal overlay
  */
 export function AddBookDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null as string | null);
   const [isPending, startTransition] = useTransition();
 
   if (!isOpen) return null;
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setError(null);
     const formData = new FormData(event.currentTarget);
-    
     const title = formData.get("title") as string;
     const author = formData.get("author") as string;
+    const coverUrl = formData.get("coverUrl") as string;
 
     if (!title || !author) {
       setError("Title and Author are required.");
@@ -30,11 +29,13 @@ export function AddBookDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: (
     }
 
     startTransition(async () => {
-      const result = await addBook(formData);
-      if (result?.error) {
+      const result = await addBook({ title, author, coverUrl });
+      if (result.error) {
         setError(result.error);
       } else {
+        setError(null);
         onClose();
+        window.location.reload();
       }
     });
   }
@@ -120,19 +121,15 @@ export function AddBookDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: (
   );
 }
 
-/**
- * SignInForm Component
- * Handles Supabase Auth
- */
 export function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null as string | null);
   const router = useRouter();
   const supabase = createClientComponentClient();
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -144,12 +141,13 @@ export function SignInForm() {
 
     if (error) {
       setError(error.message);
-      setLoading(false);
     } else {
       router.push("/");
       router.refresh();
     }
-  };
+
+    setLoading(false);
+  }
 
   return (
     <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-lg border border-gray-100">

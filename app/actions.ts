@@ -1,71 +1,114 @@
-'use server'
+"use server"
 
-import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from "@/lib/supabase/server";
 
-export async function addBook(formData: FormData) {
-  const supabase = createClient()
+interface ActionResult {
+  success: boolean;
+  error?: string;
+}
 
-  const title = formData.get('title') as string
-  const author = formData.get('author') as string
-  const cover_url = formData.get('cover_url') as string
+export async function addBook({
+  title,
+  author,
+  cover_url,
+}: {
+  title: string;
+  author: string;
+  cover_url?: string;
+}): Promise<ActionResult> {
+  const supabase = createServerClient();
 
-  if (!title || !author) {
-    throw new Error('Title and author are required')
-  }
-
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error('Not authenticated')
+    return { success: false, error: "Unauthorized" };
   }
 
-  const { error } = await supabase.from('books').insert({
+  const { error } = await supabase.from("books").insert({
     title,
     author,
-    cover_url: cover_url || null,
-    added_by_user_id: user.id,
-  })
+    cover_url: cover_url ?? null,
+  });
 
   if (error) {
-    throw new Error(error.message)
+    return { success: false, error: error.message };
   }
 
-  revalidatePath('/dashboard')
+  return { success: true };
 }
 
-export async function checkoutBook(bookId: string) {
-  const supabase = createClient()
+export async function checkoutBook(bookId: string): Promise<ActionResult> {
+  const supabase = createServerClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error('Not authenticated')
+    return { success: false, error: "Unauthorized" };
   }
 
-  const { error } = await supabase.rpc('checkout_book', { book_id: bookId })
+  const { data: rows, error: updateError } = await supabase
+    .from("books")
+    .update({ status: "checked_out", borrower_id: user.id })
+    .eq("id", bookId)
+    .eq("status", "available")
+    .is("borrower_id", null)
+    .select();
 
-  if (error) {
-    throw new Error(error.message)
+  if (updateError) {
+    return { success: false, error: updateError.message };
   }
 
-  revalidatePath('/dashboard')
+  if (!rows || rows.length === 0) {
+    return { success: false, error: "Book is not available" };
+  }
+
+  const { error: historyError } = await supabase.from("borrow_history").insert({
+    book_id: bookId,
+    borrower_id: user.id,
+    borrowed_at: new Date().toISOString(),
+  });
+
+  if (historyError) {
+    return { success: false, error: historyError.message };
+  }
+
+  return { success: true };
 }
 
-export async function returnBook(bookId: string) {
-  const supabase = createClient()
+export async function returnBook(bookId: string): Promise<ActionResult> {
+  const supabase = createServerClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error('Not authenticated')
+    return { success: false, error: "Unauthorized" };
   }
 
-  const { error } = await supabase.rpc('return_book', { book_id: bookId })
+  const { data: rows, error: updateError } = await supabase
+    .from("books")
+    .update({ status: "available", borrower_id: null })
+    .eq("id", bookId)
+    .eq("borrower_id", user.id)
+    .select();
 
-  if (error) {
-    throw new Error(error.message)
+  if (updateError) {
+    return { success: false, error: updateError.message };
   }
 
-  revalidatePath('/dashboard')
+  if (!rows || rows.length === 0) {
+    return { success: false, error: "Book not found or not checked out by you" };
+  }
+
+  const { error: historyError } = await supabase
+    .from("borrow_history")
+    .update({ returned_at: new Date().toISOString() })
+    .eq("book_id", bookId)
+    .eq("borrower_id", user.id)
+    .is("returned_at", null);
+
+  if (historyError) {
+    return { success: false, error: historyError.message };
+  }
+
+  return { success: true };
 }

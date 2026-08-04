@@ -32,7 +32,7 @@ export async function updateSession(request: NextRequest) {
             value,
             ...options,
             httpOnly: true,
-            sameSite: "Lax",
+            sameSite: "lax",
             secure: process.env.NODE_ENV === "production",
           });
         },
@@ -52,7 +52,7 @@ export async function updateSession(request: NextRequest) {
             value: "",
             ...options,
             httpOnly: true,
-            sameSite: "Lax",
+            sameSite: "lax",
             secure: process.env.NODE_ENV === "production",
           });
         },

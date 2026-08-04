@@ -19,7 +19,7 @@ export const createServerClient = () => {
               value,
               ...options,
               httpOnly: true,
-              sameSite: "Lax",
+              sameSite: "lax",
               secure: process.env.NODE_ENV === "production",
             });
           } catch (error) {
@@ -35,7 +35,7 @@ export const createServerClient = () => {
               value: "",
               ...options,
               httpOnly: true,
-              sameSite: "Lax",
+              sameSite: "lax",
               secure: process.env.NODE_ENV === "production",
             });
           } catch (error) {

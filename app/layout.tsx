@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ReactNode } from "react";
 import "./globals.css";
 import TopBar from "@/components/TopBar";
+import ThemeProvider from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "Shelf",
@@ -30,22 +31,24 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col bg-[var(--color-canvas)] text-[var(--color-ink)] font-[family-name:var(--font-ui)] antialiased">
-        <TopBar />
-        
-        <main className="flex-grow max-w-[1440px] mx-auto w-full px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-8)] md:py-[var(--space-10)]">
-          {children}
-        </main>
+        <ThemeProvider>
+          <TopBar />
 
-        <footer className="border-t border-[var(--color-border)] bg-[var(--color-surface)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-8)]">
-          <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-[var(--space-4)]">
-            <p className="font-[family-name:var(--font-ui)] text-[14px] text-[var(--color-ink-muted)]">
-              &copy; {new Date().getFullYear()} Shelf. All rights reserved.
-            </p>
-            <nav className="flex gap-[var(--space-6)] font-[family-name:var(--font-ui)] text-[14px] text-[var(--color-ink-muted)]">
-              {/* Footer links */}
-            </nav>
-          </div>
-        </footer>
+          <main className="flex-grow max-w-[1440px] mx-auto w-full px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-8)] md:py-[var(--space-10)]">
+            {children}
+          </main>
+
+          <footer className="border-t border-[var(--color-border)] bg-[var(--color-surface)] px-[var(--space-4)] py-[var(--space-6)] md:px-[var(--space-8)]">
+            <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-[var(--space-4)]">
+              <p className="font-[family-name:var(--font-ui)] text-[14px] text-[var(--color-ink-muted)]">
+                &copy; {new Date().getFullYear()} Shelf. All rights reserved.
+              </p>
+              <nav className="flex gap-[var(--space-6)] font-[family-name:var(--font-ui)] text-[14px] text-[var(--color-ink-muted)]">
+                {/* Footer links */}
+              </nav>
+            </div>
+          </footer>
+        </ThemeProvider>
       </body>
     </html>
   );

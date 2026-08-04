@@ -2,28 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useTheme } from "@/components/ThemeProvider";
 
 export default function TopBar() {
   const pathname = usePathname();
   const isSignInPage = pathname === "/sign-in";
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-  
-  // Mock auth state - in a real app this would come from a hook/context
+  const { theme, toggleTheme } = useTheme();
+
+  // TODO: Replace with real auth hook when available
   const [user, setUser] = useState<{ email: string } | null>(null);
-
-  useEffect(() => {
-    const savedTheme = document.documentElement.getAttribute("data-theme") as "light" | "dark";
-    if (savedTheme) setTheme(savedTheme);
-  }, []);
-
-  const toggleTheme = () => {
-    const nextTheme = theme === "light" ? "dark" : "light";
-    setTheme(nextTheme);
-    document.documentElement.setAttribute("data-theme", nextTheme);
-    localStorage.setItem("theme", nextTheme);
-  };
 
   if (isSignInPage) return null;
 
@@ -31,8 +19,8 @@ export default function TopBar() {
     <header className="sticky top-0 z-50 h-[56px] w-full border-b border-[var(--color-border)] bg-[var(--color-surface)]/80 backdrop-blur-md">
       <nav className="mx-auto flex h-full max-w-[1440px] items-center justify-between px-[var(--space-4)] md:px-[var(--space-8)]">
         <div className="flex items-center gap-[var(--space-6)]">
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="font-[family-name:var(--font-display)] text-[18px] font-medium tracking-tight text-[var(--color-ink)] transition-opacity hover:opacity-80"
           >
             Shelf
@@ -55,7 +43,7 @@ export default function TopBar() {
               <span className="hidden font-[family-name:var(--font-ui)] text-[14px] text-[var(--color-ink-muted)] md:block">
                 {user.email}
               </span>
-              <button 
+              <button
                 onClick={() => setUser(null)}
                 className="font-[family-name:var(--font-ui)] text-[14px] font-medium text-[var(--color-ink)] transition-colors hover:text-[var(--color-shelf-brown)]"
               >

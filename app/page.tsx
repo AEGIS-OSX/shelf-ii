@@ -1,294 +1,149 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { checkoutBook, returnBook } from "./actions";
-import SearchInput from "@/components/SearchInput";
-import EmptyState from "@/components/EmptyState";
-import BookRow from "@/components/BookRow";
-import type { Book } from "@/types";
+import { useState, useMemo, useCallback } from "react";
+import { useBooks } from "@/lib/hooks/useBooks";
+import { useBookMutations } from "@/lib/hooks/useBookMutations";
+import { BookRow } from "@/components/BookRow";
+import { SearchInput } from "@/components/SearchInput";
 
-type StatusFilter = "all" | "available" | "checked_out";
+type StatusTabValue = "all" | "available" | "checked_out";
+
+function mapStatus(status: "available" | "checked_out"): "available" | "checked-out" {
+  return status === "checked_out" ? "checked-out" : "available";
+}
 
 export default function HomePage() {
-  const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [userId, setUserId] = useState<string | null>(null);
-  const [actionErrorByBookId, setActionErrorByBookId] = useState<Record<string, string>>({});
-  const [pendingBookId, setPendingBookId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState<StatusTabValue>("all");
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
-  const fetchBooks = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const supabase = createClient();
-      const { data, error: fetchError } = await supabase
-        .from("books")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (fetchError) {
-        setError(fetchError.message || "Failed to load books");
-      } else {
-        setBooks(data || []);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Unexpected error loading books");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const supabase = createClient();
-        const { data } = await supabase.auth.getUser();
-        if (!cancelled) {
-          setUserId(data.user?.id ?? null);
-        }
-      } catch {
-        if (!cancelled) {
-          setUserId(null);
-        }
-      }
-      if (!cancelled) {
-        await fetchBooks();
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [fetchBooks]);
+  const { books, isLoading, error, refetch } = useBooks(search);
+  const { checkoutBook, returnBook } = useBookMutations(refetch);
 
   const filteredBooks = useMemo(() => {
-    let result = books;
-    if (statusFilter !== "all") {
-      result = result.filter((b) => b.status === statusFilter);
-    }
-    const trimmedQuery = query.trim().toLowerCase();
-    if (trimmedQuery) {
-      result = result.filter(
-        (b) =>
-          b.title.toLowerCase().includes(trimmedQuery) ||
-          b.author.toLowerCase().includes(trimmedQuery)
-      );
-    }
-    return result;
-  }, [books, query, statusFilter]);
+    if (activeTab === "all") return books;
+    return books.filter((book) => book.status === activeTab);
+  }, [books, activeTab]);
 
-  const handleCheckOut = useCallback(
+  const handleCheckout = useCallback(
     async (bookId: string) => {
-      setPendingBookId(bookId);
-      setActionErrorByBookId((prev) => {
-        const next = { ...prev };
-        delete next[bookId];
-        return next;
-      });
+      setMutationError(null);
       try {
-        const res = await checkoutBook(bookId);
-        if (res.success) {
-          await fetchBooks();
-        } else {
-          setActionErrorByBookId((prev) => ({ ...prev, [bookId]: res.error || "Check out failed" }));
+        const result = await checkoutBook(bookId);
+        if (!result?.success) {
+          setMutationError(result?.error || "Check out failed. Please try again.");
         }
-      } catch (e) {
-        setActionErrorByBookId((prev) => ({
-          ...prev,
-          [bookId]: e instanceof Error ? e.message : "Check out failed",
-        }));
-      } finally {
-        setPendingBookId(null);
+      } catch (err) {
+        setMutationError(err instanceof Error ? err.message : "Check out failed. Please try again.");
       }
     },
-    [fetchBooks]
+    [checkoutBook]
   );
 
   const handleReturn = useCallback(
     async (bookId: string) => {
-      setPendingBookId(bookId);
-      setActionErrorByBookId((prev) => {
-        const next = { ...prev };
-        delete next[bookId];
-        return next;
-      });
+      setMutationError(null);
       try {
-        const res = await returnBook(bookId);
-        if (res.success) {
-          await fetchBooks();
-        } else {
-          setActionErrorByBookId((prev) => ({ ...prev, [bookId]: res.error || "Return failed" }));
+        const result = await returnBook(bookId);
+        if (!result?.success) {
+          setMutationError(result?.error || "Return failed. Please try again.");
         }
-      } catch (e) {
-        setActionErrorByBookId((prev) => ({
-          ...prev,
-          [bookId]: e instanceof Error ? e.message : "Return failed",
-        }));
-      } finally {
-        setPendingBookId(null);
+      } catch (err) {
+        setMutationError(err instanceof Error ? err.message : "Return failed. Please try again.");
       }
     },
-    [fetchBooks]
+    [returnBook]
   );
 
-  const tabs: { key: StatusFilter; label: string }[] = [
-    { key: "all", label: "All" },
-    { key: "available", label: "Available" },
-    { key: "checked_out", label: "Checked Out" },
+  const tabs: { label: string; value: StatusTabValue }[] = [
+    { label: "All", value: "all" },
+    { label: "Available", value: "available" },
+    { label: "Checked Out", value: "checked_out" },
   ];
 
+  const isEmptyCatalog = !isLoading && !error && books.length === 0 && !search && activeTab === "all";
+
   return (
-    <main style={{ padding: "var(--space-4)" }}>
-      <h1
-        style={{
-          fontFamily: "var(--font-display)",
-          fontSize: "1.75rem",
-          fontWeight: 700,
-          color: "var(--color-ink)",
-          marginBottom: "var(--space-4)",
-        }}
-      >
-        Catalog
-      </h1>
+    <section className="container mx-auto px-4 py-8" aria-label="Book catalog">
+      <h1 className="text-2xl font-semibold mb-6 text-gray-900">Catalog</h1>
 
-      <div
-        role="tablist"
-        aria-label="Filter by status"
-        style={{
-          display: "flex",
-          gap: "var(--space-2)",
-          marginBottom: "var(--space-4)",
-          borderBottom: "1px solid var(--color-border)",
-        }}
-      >
-        {tabs.map((t) => {
-          const active = statusFilter === t.key;
-          return (
-            <button
-              key={t.key}
-              role="tab"
-              aria-selected={active}
-              aria-pressed={active}
-              onClick={() => setStatusFilter(t.key)}
-              style={{
-                padding: "var(--space-2) var(--space-3)",
-                fontFamily: "var(--font-ui)",
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                color: active ? "var(--color-ink)" : "var(--color-ink-muted)",
-                borderBottom: active ? "2px solid var(--color-focus)" : "2px solid transparent",
-                background: "none",
-                borderTop: "none",
-                borderLeft: "none",
-                borderRight: "none",
-                cursor: "pointer",
-                transition: "color 150ms ease-out",
-              }}
-            >
-              {t.label}
-            </button>
-          );
-        })}
-      </div>
-
-      <div style={{ marginBottom: "var(--space-4)" }}>
+      <div className="mb-6">
         <SearchInput
-          value={query}
-          onChange={setQuery}
-          placeholder="Search by title or author"
+          value={search}
+          onChange={setSearch}
+          placeholder="Search by title or author..."
         />
       </div>
 
-      {loading && (
-        <p
-          style={{
-            fontFamily: "var(--font-ui)",
-            color: "var(--color-ink-muted)",
-            padding: "var(--space-8) 0",
-            textAlign: "center",
-          }}
-        >
-          Loading books…
-        </p>
+      <div className="flex gap-6 mb-6 border-b border-gray-200" role="tablist" aria-label="Filter by status">
+        {tabs.map((tab) => (
+          <button
+            key={tab.value}
+            role="tab"
+            aria-selected={activeTab === tab.value}
+            onClick={() => setActiveTab(tab.value)}
+            className={`pb-2 text-sm font-medium transition-colors ${
+              activeTab === tab.value
+                ? "text-blue-600 border-b-2 border-blue-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {mutationError && (
+        <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md border border-red-200 text-sm">
+          {mutationError}
+        </div>
       )}
 
-      {!loading && error && (
-        <EmptyState title="Couldn’t load books" description={error} />
+      {isLoading && (
+        <div className="py-12 text-center text-gray-500">Loading books...</div>
       )}
 
-      {!loading && !error && books.length === 0 && (
-        <EmptyState
-          title="No books yet"
-          description="Add a book to get started."
-        />
+      {!isLoading && error && (
+        <div className="py-12 text-center text-red-600">
+          <p className="font-medium">Failed to load books</p>
+          <p className="text-sm mt-1">{error instanceof Error ? error.message : "Please try again."}</p>
+        </div>
       )}
 
-      {!loading && !error && books.length > 0 && filteredBooks.length === 0 && (
-        <EmptyState
-          title="No matches"
-          description="Try a different search or filter."
-        />
+      {!isLoading && !error && filteredBooks.length === 0 && (
+        <div className="py-12 text-center text-gray-500">
+          {isEmptyCatalog ? (
+            <>
+              <p className="text-lg font-medium text-gray-700">No books yet</p>
+              <p className="text-sm mt-1">The catalog is empty. Add some books to get started.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-lg font-medium text-gray-700">No results</p>
+              <p className="text-sm mt-1">No books match your search or filter.</p>
+            </>
+          )}
+        </div>
       )}
 
-      {!loading &&
-        !error &&
-        filteredBooks.map((book) => {
-          const isSelf = book.borrower_id === userId;
-          const statusForRow: "available" | "checked-out" =
-            book.status === "available" ? "available" : "checked-out";
-          const isPending = pendingBookId === book.id;
-
-          return (
-            <div key={book.id} style={{ marginBottom: "var(--space-3)" }}>
-              <BookRow
-                title={book.title}
-                author={book.author}
-                coverSrc={book.cover_url ?? undefined}
-                status={statusForRow}
-                borrowerName={isSelf ? undefined : book.borrower_id ? "another member" : undefined}
-                isSelf={isSelf}
-                history={[]}
-                onCheckOut={
-                  book.status === "available"
-                    ? () => handleCheckOut(book.id)
-                    : undefined
-                }
-                onReturn={
-                  book.status === "checked_out"
-                    ? () => handleReturn(book.id)
-                    : undefined
-                }
-              />
-              {isPending && (
-                <p
-                  style={{
-                    fontFamily: "var(--font-ui)",
-                    fontSize: "0.75rem",
-                    color: "var(--color-ink-muted)",
-                    marginTop: "var(--space-1)",
-                  }}
-                >
-                  Working…
-                </p>
-              )}
-              {actionErrorByBookId[book.id] && !isPending && (
-                <p
-                  style={{
-                    fontFamily: "var(--font-ui)",
-                    fontSize: "0.75rem",
-                    color: "var(--color-checked-out)",
-                    marginTop: "var(--space-1)",
-                  }}
-                >
-                  {actionErrorByBookId[book.id]}
-                </p>
-              )}
-            </div>
-          );
-        })}
-    </main>
+      {!isLoading && !error && filteredBooks.length > 0 && (
+        <div className="space-y-4">
+          {filteredBooks.map((book) => (
+            <BookRow
+              key={book.id}
+              title={book.title}
+              author={book.author}
+              coverSrc={book.cover_url ?? undefined}
+              status={mapStatus(book.status)}
+              borrowerName={book.borrower_name || ""}
+              isSelf={false}
+              history={[]}
+              onCheckOut={() => handleCheckout(book.id)}
+              onReturn={() => handleReturn(book.id)}
+            />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

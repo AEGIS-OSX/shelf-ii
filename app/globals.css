@@ -5,26 +5,64 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #F7F3EA;
-  --color-accent: #FFFFFF;
-  --color-bg: #FFFFFF;
-  --color-text: #111111;
-  --color-muted: #5C6B7D;
+  /* Light mode color tokens */
+  --color-canvas: #F7F3EA;
+  --color-surface: #FFFFFF;
+  --color-ink: #1B2A3D;
+  --color-ink-muted: #5C6B7D;
+  --color-shelf-brown: #8B5E3C;
+  --color-available: #4C7A5E;
+  --color-checked-out: #B5652B;
+  --color-focus: #B5652B;
   --color-border: #E5E1D7;
-  --space-base: 8px;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 16px;
-  --font-display: 'IBM Plex Mono', Georgia, serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Font families */
+  --font-display: "Tiempos Headline", "Instrument Serif", serif;
+  --font-body: "Söhne", "Geist", sans-serif;
+  --font-mono: "Berkeley Mono", "IBM Plex Mono", monospace;
+
+  /* Spacing scale (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Component radii */
+  --radius-component: 4px;
+  --radius-tab-outer: 2px;
+
+  /* Focus ring */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+}
+
+[data-theme="dark"] {
+  --color-canvas: #12181F;
+  --color-surface: #1B232C;
+  --color-ink: #ECE6D6;
+  --color-ink-muted: #9BA3AF;
+  --color-shelf-brown: #4A3826;
+  --color-available: #5FA37B;
+  --color-checked-out: #D97D45;
+  --color-focus: #D97D45;
+  --color-border: #2D3748;
 }
 
 html, body {
-  background: var(--color-bg);
-  color: var(--color-text);
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
   font-family: var(--font-body);
+  overflow-x: clip;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
+  overflow-wrap: anywhere;
+  min-width: 0;
 }

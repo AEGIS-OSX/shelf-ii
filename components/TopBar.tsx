@@ -2,22 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 export default function TopBar() {
   const pathname = usePathname();
   const isSignInPage = pathname === "/sign-in";
   const { theme, toggleTheme } = useTheme();
-
-  // TODO: Replace with real auth hook when available
-  const [user, setUser] = useState<{ email: string } | null>(null);
+  const { user, signOut } = useAuth();
 
   if (isSignInPage) return null;
 
   return (
     <header className="sticky top-0 z-50 h-[56px] w-full border-b border-[var(--color-border)] bg-[var(--color-surface)]/80 backdrop-blur-md">
-      <nav className="mx-auto flex h-full max-w-[1440px] items-center justify-between px-[var(--space-4)] md:px-[var(--space-8)]">
+      <nav aria-label="Main navigation" className="mx-auto flex h-full max-w-[1440px] items-center justify-between px-[var(--space-4)] md:px-[var(--space-8)]">
         <div className="flex items-center gap-[var(--space-6)]">
           <Link
             href="/"
@@ -44,7 +42,7 @@ export default function TopBar() {
                 {user.email}
               </span>
               <button
-                onClick={() => setUser(null)}
+                onClick={signOut}
                 className="font-[family-name:var(--font-ui)] text-[14px] font-medium text-[var(--color-ink)] transition-colors hover:text-[var(--color-shelf-brown)]"
               >
                 Sign Out

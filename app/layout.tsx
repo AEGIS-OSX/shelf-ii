@@ -43,9 +43,9 @@ export default function RootLayout({
               <p className="font-[family-name:var(--font-ui)] text-[14px] text-[var(--color-ink-muted)]">
                 &copy; {new Date().getFullYear()} Shelf. All rights reserved.
               </p>
-              <nav className="flex gap-[var(--space-6)] font-[family-name:var(--font-ui)] text-[14px] text-[var(--color-ink-muted)]">
+              <div className="flex gap-[var(--space-6)] font-[family-name:var(--font-ui)] text-[14px] text-[var(--color-ink-muted)]">
                 {/* Footer links */}
-              </nav>
+              </div>
             </div>
           </footer>
         </ThemeProvider>

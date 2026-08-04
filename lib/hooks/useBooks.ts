@@ -1,36 +1,76 @@
-'use client'
+"use client"
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import type { Book } from '@/types'
+import { useEffect, useState, useCallback } from "react"
+import { createClient } from "@/lib/supabase/client"
+import type { Book } from "@/types"
 
-export function useBooks() {
-  const [books, setBooks] = useState<Book[]>([])
-  const [loading, setLoading] = useState(true)
+interface BookWithBorrower extends Book {
+  borrower_name: string | null
+}
+
+export function useBooks(search?: string) {
+  const [books, setBooks] = useState<BookWithBorrower[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  useEffect(() => {
+  const fetchBooks = useCallback(async () => {
     const supabase = createClient()
+    setIsLoading(true)
+    setError(null)
 
-    async function fetchBooks() {
-      try {
-        setLoading(true)
-        const { data, error: supabaseError } = await supabase
-          .from('books')
-          .select('*')
-          .order('created_at', { ascending: false })
+    try {
+      let query = supabase
+        .from("books")
+        .select("*")
+        .order("created_at", { ascending: false })
 
-        if (supabaseError) throw supabaseError
-        setBooks(data ?? [])
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to fetch books'))
-      } finally {
-        setLoading(false)
+      if (search?.trim()) {
+        const trimmed = search.trim()
+        query = query.or(`title.ilike.%${trimmed}%,author.ilike.%${trimmed}%`)
       }
+
+      const { data: booksData, error: booksError } = await query
+
+      if (booksError) throw booksError
+
+      const booksList = (booksData ?? []) as Book[]
+
+      const borrowerIds = [...new Set(
+        booksList
+          .filter((book) => book.borrower_id)
+          .map((book) => book.borrower_id as string)
+      )]
+
+      let profilesMap: Record<string, string> = {}
+      if (borrowerIds.length > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from("profiles")
+          .select("user_id, display_name")
+          .in("user_id", borrowerIds)
+
+        if (profilesError) throw profilesError
+
+        profilesMap = Object.fromEntries(
+          (profilesData ?? []).map((p) => [p.user_id, p.display_name])
+        )
+      }
+
+      const booksWithBorrower = booksList.map((book) => ({
+        ...book,
+        borrower_name: book.borrower_id ? (profilesMap[book.borrower_id] ?? null) : null,
+      }))
+
+      setBooks(booksWithBorrower)
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error("Failed to fetch books"))
+    } finally {
+      setIsLoading(false)
     }
+  }, [search])
 
+  useEffect(() => {
     fetchBooks()
-  }, [])
+  }, [fetchBooks])
 
-  return { books, loading, error }
+  return { books, isLoading, error, refetch: fetchBooks }
 }

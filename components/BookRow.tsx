@@ -51,16 +51,16 @@ export const BookRow: React.FC<BookRowProps> = ({
         <BookCover title={title} src={coverSrc} size="sm" />
         
         <div className="flex-grow min-w-0">
-          <h3 className="text-[18px] font-[500] font-[family-name:var(--font-display)] text-[var(--color-ink)] truncate">
+          <h3 className="text-[length:var(--text-h2)] font-[500] font-[family-name:var(--font-display)] text-[var(--color-ink)] truncate">
             {title}
           </h3>
-          <p className="text-[15px] font-[family-name:var(--font-ui)] text-[var(--color-ink-muted)] truncate">
+          <p className="text-[length:var(--text-body)] font-[family-name:var(--font-ui)] text-[var(--color-ink-muted)] truncate">
             {author}
           </p>
         </div>
 
         <div className="flex items-center gap-[24px]">
-          <div className={`text-[14px] font-[family-name:var(--font-ui)] ${statusColor} whitespace-nowrap`}>
+          <div className={`text-[length:var(--text-caption)] font-[family-name:var(--font-ui)] ${statusColor} whitespace-nowrap`}>
             {statusLabel}
           </div>
 
@@ -68,14 +68,14 @@ export const BookRow: React.FC<BookRowProps> = ({
             {status === "available" ? (
               <button
                 onClick={onCheckOut}
-                className="px-[12px] py-[6px] bg-[var(--color-shelf-brown)] text-[var(--color-surface)] rounded-[2px] text-[14px] font-[500] font-[family-name:var(--font-ui)] hover:opacity-90 transition-opacity focus-visible:ring-[2px] focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-[2px] outline-none"
+                className="px-[12px] py-[6px] bg-[var(--color-shelf-brown)] text-[var(--color-surface)] rounded-[2px] text-[length:var(--text-caption)] font-[500] font-[family-name:var(--font-ui)] hover:opacity-90 transition-opacity focus-visible:ring-[2px] focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-[2px] outline-none"
               >
                 Check Out
               </button>
             ) : isSelf ? (
               <button
                 onClick={onReturn}
-                className="px-[12px] py-[6px] border-[1px] border-[var(--color-shelf-brown)] text-[var(--color-shelf-brown)] rounded-[2px] text-[14px] font-[500] font-[family-name:var(--font-ui)] hover:bg-[var(--color-canvas)] transition-colors focus-visible:ring-[2px] focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-[2px] outline-none"
+                className="px-[12px] py-[6px] border-[1px] border-[var(--color-shelf-brown)] text-[var(--color-shelf-brown)] rounded-[2px] text-[length:var(--text-caption)] font-[500] font-[family-name:var(--font-ui)] hover:bg-[var(--color-canvas)] transition-colors focus-visible:ring-[2px] focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-[2px] outline-none"
               >
                 Return
               </button>
@@ -83,9 +83,10 @@ export const BookRow: React.FC<BookRowProps> = ({
 
             <button
               onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-              className="p-[6px] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors focus-visible:ring-[2px] focus-visible:ring-[var(--color-focus)] rounded-[2px] outline-none"
+              className="flex items-center gap-[4px] px-[8px] py-[4px] text-[length:var(--text-caption)] font-[family-name:var(--font-ui)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors focus-visible:ring-[2px] focus-visible:ring-[var(--color-focus)] rounded-[2px] outline-none"
               aria-label="Toggle borrow history"
             >
+              Borrow History
               <motion.svg
                 width="16"
                 height="16"
@@ -103,25 +104,24 @@ export const BookRow: React.FC<BookRowProps> = ({
       <AnimatePresence>
         {isHistoryOpen && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="overflow-hidden"
           >
             <div className="pb-[16px] pl-[68px] pr-[4px]">
-              <h4 className="text-[14px] font-[family-name:var(--font-mono)] text-[var(--color-ink-muted)] uppercase tracking-wider mb-[8px]">
+              <h4 className="text-[length:var(--text-mono-label)] font-[family-name:var(--font-mono)] text-[var(--color-ink-muted)] uppercase tracking-wider mb-[8px]">
                 History
               </h4>
               <div className="space-y-[4px]">
                 {history.length > 0 ? (
                   history.map((entry, idx) => (
-                    <div key={idx} className="text-[14px] font-[family-name:var(--font-ui)] text-[var(--color-ink)]">
+                    <div key={idx} className="text-[length:var(--text-caption)] font-[family-name:var(--font-ui)] text-[var(--color-ink)]">
                       {entry.name} — {entry.date}{entry.isCurrent ? " to Present" : ""}
                     </div>
                   ))
                 ) : (
-                  <div className="text-[14px] font-[family-name:var(--font-ui)] text-[var(--color-ink-muted)]">
+                  <div className="text-[length:var(--text-caption)] font-[family-name:var(--font-ui)] text-[var(--color-ink-muted)]">
                     No one has borrowed this book yet.
                   </div>
                 )}

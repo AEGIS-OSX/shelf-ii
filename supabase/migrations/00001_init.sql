@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS public.books (
     author      text NOT NULL,
     cover_url   text,
     status      text NOT NULL DEFAULT 'available' CHECK (status IN ('available', 'checked_out')),
-    borrower_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+    borrower_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
     created_at  timestamptz DEFAULT now(),
     updated_at  timestamptz DEFAULT now()
 );
@@ -40,7 +40,7 @@ COMMENT ON COLUMN public.books.borrower_id IS 'current borrower, null when avail
 CREATE TABLE IF NOT EXISTS public.borrow_history (
     id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     book_id       uuid NOT NULL REFERENCES public.books(id) ON DELETE CASCADE,
-    borrower_id   uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+    borrower_id   uuid REFERENCES auth.users(id) ON DELETE SET NULL,
     borrower_name text,
     borrowed_at   timestamptz DEFAULT now(),
     returned_at   timestamptz

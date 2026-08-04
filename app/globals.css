@@ -3,43 +3,79 @@
 @tailwind utilities;
 
 :root {
-  --canvas: #ffffff;
-  --surface: #f9fafb;
-  --ink: #111827;
-  --ink-muted: #6b7280;
-  --shelf-brown: #78350f;
-  --available: #10b981;
-  --checked-out: #ef4444;
-  --focus: #3b82f6;
-  --border: #e5e7eb;
+  /* Colors - Light */
+  --color-canvas: #F7F3EA;
+  --color-surface: #FFFFFF;
+  --color-ink: #1B2A3D;
+  --color-ink-muted: #5C6B7D;
+  --color-shelf-brown: #8B5E3C;
+  --color-available: #4C7A5E;
+  --color-checked-out: #B5652B;
+  --color-focus: #B5652B;
+  --color-border: #E5E1D7;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Typography */
+  --font-display: "Tiempos Headline", "Instrument Serif", serif;
+  --font-ui: "Söhne", "Geist", sans-serif;
+  --font-mono: "Berkeley Mono", "IBM Plex Mono", monospace;
 }
 
 [data-theme='dark'] {
-  --canvas: #111827;
-  --surface: #1f2937;
-  --ink: #f9fafb;
-  --ink-muted: #9ca3af;
-  --shelf-brown: #d97706;
-  --available: #34d399;
-  --checked-out: #f87171;
-  --focus: #60a5fa;
-  --border: #374151;
+  --color-canvas: #12181F;
+  --color-surface: #1B232C;
+  --color-ink: #ECE6D6;
+  --color-ink-muted: #9BA3AF;
+  --color-shelf-brown: #4A3826;
+  --color-available: #5FA37B;
+  --color-checked-out: #D97D45;
+  --color-focus: #D97D45;
+  --color-border: #2D3748;
 }
 
 @layer base {
   body {
-    background-color: var(--canvas);
-    color: var(--ink);
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-ui);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   * {
-    border-color: var(--border);
+    border-color: var(--color-border);
   }
 
   :focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px var(--canvas), 0 0 0 4px var(--focus);
+    box-shadow: 0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-focus);
+  }
+}
+
+@layer components {
+  .text-h2 {
+    font-family: var(--font-display);
+    font-size: 18px;
+    line-height: 1.3;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  .text-caption {
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.4;
+    font-weight: 400;
   }
 }

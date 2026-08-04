@@ -1,76 +1,79 @@
-"use client"
+"use client";
 
-import { useEffect, useState, useCallback } from "react"
-import { createClient } from "@/lib/supabase/client"
-import type { Book } from "@/types"
+import { useState, useEffect, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
+import type { Book } from "@/types";
 
-interface BookWithBorrower extends Book {
-  borrower_name: string | null
+export interface BookWithBorrowerName extends Book {
+  borrower_name: string | null;
 }
 
-export function useBooks(search?: string) {
-  const [books, setBooks] = useState<BookWithBorrower[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
+export interface UseBooksResult {
+  books: BookWithBorrowerName[];
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => void;
+}
+
+export function useBooks(search?: string): UseBooksResult {
+  const [books, setBooks] = useState<BookWithBorrowerName[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   const fetchBooks = useCallback(async () => {
-    const supabase = createClient()
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
 
     try {
-      let query = supabase
-        .from("books")
-        .select("*")
-        .order("created_at", { ascending: false })
+      const supabase = createClient();
+      let query = supabase.from("books").select("*");
 
-      if (search?.trim()) {
-        const trimmed = search.trim()
-        query = query.or(`title.ilike.%${trimmed}%,author.ilike.%${trimmed}%`)
+      if (search && search.trim()) {
+        const term = search.trim();
+        query = query.or(`title.ilike.%${term}%,author.ilike.%${term}%`);
       }
 
-      const { data: booksData, error: booksError } = await query
+      const { data: booksData, error: booksError } = await query;
 
-      if (booksError) throw booksError
+      if (booksError) {
+        throw new Error(booksError.message);
+      }
 
-      const booksList = (booksData ?? []) as Book[]
+      const booksList = (booksData || []) as Book[];
+      const borrowerIds = booksList
+        .map((b) => b.borrower_id)
+        .filter((id): id is string => id !== null);
 
-      const borrowerIds = [...new Set(
-        booksList
-          .filter((book) => book.borrower_id)
-          .map((book) => book.borrower_id as string)
-      )]
-
-      let profilesMap: Record<string, string> = {}
+      let profilesMap: Record<string, string> = {};
       if (borrowerIds.length > 0) {
         const { data: profilesData, error: profilesError } = await supabase
           .from("profiles")
           .select("user_id, display_name")
-          .in("user_id", borrowerIds)
+          .in("user_id", borrowerIds);
 
-        if (profilesError) throw profilesError
-
-        profilesMap = Object.fromEntries(
-          (profilesData ?? []).map((p) => [p.user_id, p.display_name])
-        )
+        if (!profilesError && profilesData) {
+          profilesMap = Object.fromEntries(
+            profilesData.map((p) => [p.user_id, p.display_name])
+          );
+        }
       }
 
-      const booksWithBorrower = booksList.map((book) => ({
+      const booksWithNames: BookWithBorrowerName[] = booksList.map((book) => ({
         ...book,
-        borrower_name: book.borrower_id ? (profilesMap[book.borrower_id] ?? null) : null,
-      }))
+        borrower_name: book.borrower_id ? profilesMap[book.borrower_id] || null : null,
+      }));
 
-      setBooks(booksWithBorrower)
+      setBooks(booksWithNames);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to fetch books"))
+      setError(err instanceof Error ? err : new Error("Failed to fetch books"));
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [search])
+  }, [search]);
 
   useEffect(() => {
-    fetchBooks()
-  }, [fetchBooks])
+    fetchBooks();
+  }, [fetchBooks]);
 
-  return { books, isLoading, error, refetch: fetchBooks }
+  return { books, isLoading, error, refetch: fetchBooks };
 }

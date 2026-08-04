@@ -1,51 +1,58 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { addBook, checkoutBook, returnBook } from "@/app/actions"
+import { useState } from "react";
+import { addBook, checkoutBook, returnBook } from "@/app/actions";
 
-interface AddBookInput {
-  title: string
-  author: string
-  cover_url?: string
+export interface AddBookInput {
+  title: string;
+  author: string;
+  cover_url?: string;
 }
 
-export function useBookMutations(refetchBooks: () => void) {
-  const [isLoading, setIsLoading] = useState(false)
+export interface UseBookMutationsResult {
+  addBook: (input: AddBookInput) => Promise<void>;
+  checkoutBook: (bookId: string) => Promise<void>;
+  returnBook: (bookId: string) => Promise<void>;
+  isLoading: boolean;
+}
+
+export function useBookMutations(refetchBooks: () => void): UseBookMutationsResult {
+  const [isLoading, setIsLoading] = useState(false);
 
   const addBookMutation = async (input: AddBookInput) => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      await addBook(input)
-      refetchBooks()
+      await addBook(input);
+      refetchBooks();
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const checkoutBookMutation = async (bookId: string) => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      await checkoutBook(bookId)
-      refetchBooks()
+      await checkoutBook(bookId);
+      refetchBooks();
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const returnBookMutation = async (bookId: string) => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      await returnBook(bookId)
-      refetchBooks()
+      await returnBook(bookId);
+      refetchBooks();
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return {
     addBook: addBookMutation,
     checkoutBook: checkoutBookMutation,
     returnBook: returnBookMutation,
     isLoading,
-  }
+  };
 }

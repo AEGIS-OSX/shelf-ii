@@ -55,11 +55,13 @@ export default function AddBookDrawer() {
     const drawer = drawerRef.current;
     if (!drawer) return;
 
+    const drawerEl: HTMLDivElement = drawer;
+
     const focusableSelector =
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
     function getFocusables() {
-      return Array.from(drawer.querySelectorAll<HTMLElement>(focusableSelector)).filter(
+      return Array.from(drawerEl.querySelectorAll<HTMLElement>(focusableSelector)).filter(
         (el) => !el.hasAttribute("disabled") && el.offsetParent !== null
       );
     }

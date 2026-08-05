@@ -9,41 +9,55 @@ export interface AddBookInput {
   cover_url?: string;
 }
 
+export interface ActionResult {
+  success: boolean;
+  error?: string;
+}
+
 export interface UseBookMutationsResult {
-  addBook: (input: AddBookInput) => Promise<void>;
-  checkoutBook: (bookId: string) => Promise<void>;
-  returnBook: (bookId: string) => Promise<void>;
+  addBook: (input: AddBookInput) => Promise<ActionResult>;
+  checkoutBook: (bookId: string) => Promise<ActionResult>;
+  returnBook: (bookId: string) => Promise<ActionResult>;
   isLoading: boolean;
 }
 
 export function useBookMutations(refetchBooks: () => void): UseBookMutationsResult {
   const [isLoading, setIsLoading] = useState(false);
 
-  const addBookMutation = async (input: AddBookInput) => {
+  const addBookMutation = async (input: AddBookInput): Promise<ActionResult> => {
     setIsLoading(true);
     try {
-      await addBook(input);
-      refetchBooks();
+      const result = await addBook(input);
+      if (result?.success) {
+        refetchBooks();
+      }
+      return result;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const checkoutBookMutation = async (bookId: string) => {
+  const checkoutBookMutation = async (bookId: string): Promise<ActionResult> => {
     setIsLoading(true);
     try {
-      await checkoutBook(bookId);
-      refetchBooks();
+      const result = await checkoutBook(bookId);
+      if (result?.success) {
+        refetchBooks();
+      }
+      return result;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const returnBookMutation = async (bookId: string) => {
+  const returnBookMutation = async (bookId: string): Promise<ActionResult> => {
     setIsLoading(true);
     try {
-      await returnBook(bookId);
-      refetchBooks();
+      const result = await returnBook(bookId);
+      if (result?.success) {
+        refetchBooks();
+      }
+      return result;
     } finally {
       setIsLoading(false);
     }
